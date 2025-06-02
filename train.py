@@ -15,6 +15,8 @@ from tqdm import tqdm
 import nltk
 #from nltk.tokenize import word_tokenize
 
+import function.format as format
+
 # Download NLTK data
 nltk.download('punkt')
 
@@ -30,10 +32,18 @@ tokenizer = AutoTokenizer.from_pretrained("vinai/phobert-base")
 
 # Bước 4: Định nghĩa các nhãn NER
 NER_LABELS = ['O',
-              'B-PER', 'I-PER',
-              'B-ORG', 'I-ORG',
-              'B-LOC', 'I-LOC',
-              'B-DATE', 'I-DATE']
+              'B-NAME', 'I-NAME',
+              'B-ORGANIZATION', 'I-ORGANIZATION',
+              'B-LOCATION', 'I-LOCATION',
+              'B-DATE', 'I-DATE',
+              'B-PATIENT_ID', 'I-PATIENT_ID',
+              'B-GENDER', 'I-GENDER',
+              'B-OCCUPATION', 'I-OCCUPATION',
+              'B-SYMPTOM_AND_DISEASE', 'I-SYMPTOM_AND_DISEASE',
+              'B-TRANSPORTATION', 'I-TRANSPORTATION',
+              'B-AGE', 'I-AGE',
+              'B-JOB', 'I-JOB'
+              ]
 
 # Ánh xạ nhãn sang id và ngược lại
 tag2id = {tag: id for id, tag in enumerate(NER_LABELS)}
@@ -391,9 +401,9 @@ def main():
     os.makedirs("data", exist_ok=True)
     os.makedirs("models", exist_ok=True)
 
-    train_file = "data/train.conll"
-    val_file = "data/val.conll"
-    test_file = "data/test.conll"
+    train_file = "data/train_covid.conll"
+    val_file = "data/val_covid.conll"
+    test_file = "data/test_covid.conll"
 
     print("Đọc dữ liệu...")
     train_texts, train_tags = read_conll_data(train_file)
@@ -438,11 +448,17 @@ def main():
     print(f"Mô hình đã được lưu vào {model_save_path}") # Thêm thông báo xác nhận
 
 
-    test_text = "Nguyễn Văn A là giám đốc Công ty TNHH ABC tại Hà Nội vào ngày 10 tháng 5 năm 2023"
+    test_text = "Nguyễn Văn A ( Nam ) là giám đốc Công ty TNHH ABC tại Hà Nội vào ngày hôm qua ( tức 10 tháng 5 năm 2023 ), hiện đang là bệnh nhân BN002 tại bệnh viện Ung bướu Trung ương, biểu hiện ho, sốt cao, đang được điều trị tại khoa Hồi sức số 1, được vận chuyển bằng xe cứu thương."
     tagged_words = predict_ner(model, tokenizer, test_text, device)
+
+    extractor = format.DateExtractor()
+    tagged_words_after_format = extractor.process_ner_results(tagged_words)
 
     print("\nKết quả nhận diện thực thể:")
     print("Tagged words:", tagged_words)
+
+    print("\nKết quả nhận diện thực thể sau khi định dạng:")
+    print("Tagged words after format:", tagged_words_after_format)
 
 if __name__ == "__main__":
     main() 

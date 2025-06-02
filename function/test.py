@@ -116,10 +116,18 @@ def main():
 
     # Định nghĩa tag2id và id2tag (phải giống khi huấn luyện)
     NER_LABELS = ['O',
-                'B-PER', 'I-PER',
-                'B-ORG', 'I-ORG',
-                'B-LOC', 'I-LOC',
-                'B-DATE', 'I-DATE']
+              'B-PERSON_NAME', 'I-PERSON_NAME',
+              'B-ORGANIZATION', 'I-ORGANIZATION',
+              'B-LOCATION', 'I-LOCATION',
+              'B-DATE', 'I-DATE',
+              'B-PATIENT_ID', 'I-PATIENT_ID',
+              'B-GENDER', 'I-GENDER',
+              'B-OCCUPATION', 'I-OCCUPATION',
+              'B-SYMPTOM_AND_DISEASE', 'I-SYMPTOM_AND_DISEASE',
+              'B-TRANSPORTATION', 'I-TRANSPORTATION',
+              'B-AGE', 'I-AGE',
+              'B-JOB', 'I-JOB'
+              ]
 
     # Ánh xạ nhãn sang id và ngược lại
     tag2id = {tag: id for id, tag in enumerate(NER_LABELS)}

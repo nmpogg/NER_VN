@@ -5,6 +5,8 @@ import torch
 from transformers import AutoTokenizer
 from test import PhoBERTForNER, predict_ner
 
+import format
+
 app = FastAPI()
 
 # Cấu hình CORS
@@ -26,10 +28,18 @@ tokenizer = AutoTokenizer.from_pretrained("vinai/phobert-base")
 
 # Định nghĩa nhãn NER
 NER_LABELS = ['O',
-            'B-PER', 'I-PER',
-            'B-ORG', 'I-ORG',
-            'B-LOC', 'I-LOC',
-            'B-DATE', 'I-DATE']
+              'B-NAME', 'I-NAME',
+              'B-ORGANIZATION', 'I-ORGANIZATION',
+              'B-LOCATION', 'I-LOCATION',
+              'B-DATE', 'I-DATE',
+              'B-PATIENT_ID', 'I-PATIENT_ID',
+              'B-GENDER', 'I-GENDER',
+              'B-OCCUPATION', 'I-OCCUPATION',
+              'B-SYMPTOM_AND_DISEASE', 'I-SYMPTOM_AND_DISEASE',
+              'B-TRANSPORTATION', 'I-TRANSPORTATION',
+              'B-AGE', 'I-AGE',
+              'B-JOB', 'I-JOB',
+              ]
 
 # Ánh xạ nhãn
 tag2id = {tag: id for id, tag in enumerate(NER_LABELS)}
@@ -47,12 +57,14 @@ async def process_text(request: TextRequest):
     try:
         # Dự đoán NER
         tagged_words = predict_ner(model, tokenizer, request.text, device, id2tag)
+        extractor = format.DateExtractor()
+        tagged_words_after_format = extractor.process_ner_results(tagged_words)
         
         # Chuyển đổi kết quả sang định dạng phù hợp với giao diện
         entities = []
         current_entity = None
         
-        for word, tag in tagged_words:
+        for word, tag in tagged_words_after_format:
             if tag.startswith('B-'):
                 if current_entity:
                     entities.append(current_entity)

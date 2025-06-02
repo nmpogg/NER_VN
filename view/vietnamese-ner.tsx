@@ -15,17 +15,31 @@ interface Entity {
 }
 
 const entityColors = {
-  PER: "bg-blue-100 text-blue-800 border-blue-200",
-  LOC: "bg-green-100 text-green-800 border-green-200",
-  ORG: "bg-purple-100 text-purple-800 border-purple-200",
+  NAME: "bg-blue-100 text-blue-800 border-blue-200",
+  LOCATION: "bg-green-100 text-green-800 border-green-200",
+  ORGANIZATION: "bg-purple-100 text-purple-800 border-purple-200",
   DATE: "bg-amber-100 text-amber-800 border-amber-200",
+  PATIENT_ID: "bg-red-100 text-red-800 border-red-200",
+  GENDER: "bg-pink-100 text-pink-800 border-pink-200",
+  OCCUPATION: "bg-indigo-100 text-indigo-800 border-indigo-200",
+  SYMPTOM_AND_DISEASE: "bg-orange-100 text-orange-800 border-orange-200",
+  TRANSPORTATION: "bg-teal-100 text-teal-800 border-teal-200",
+  AGE: "bg-cyan-100 text-cyan-800 border-cyan-200",
+  JOB: "bg-yellow-100 text-yellow-800 border-yellow-200"
 }
 
 const entityLabels = {
-  PER: "PERSON_NAME",
-  LOC: "LOCATION",
-  ORG: "ORGANIZATION",
-  DATE: "DATE",
+  NAME: "Tên người",
+  LOCATION: "Địa điểm",
+  ORGANIZATION: "Tổ chức",
+  DATE: "Ngày tháng",
+  PATIENT_ID: "Mã bệnh nhân",
+  GENDER: "Giới tính",
+  OCCUPATION: "Nghề nghiệp",
+  SYMPTOM_AND_DISEASE: "Triệu chứng & Bệnh",
+  TRANSPORTATION: "Phương tiện",
+  AGE: "Tuổi",
+  JOB: "Công việc"
 }
 
 export default function Component() {
@@ -59,7 +73,6 @@ export default function Component() {
       setHasResult(true)
     } catch (error) {
       console.error("Error processing text:", error)
-      // Xử lý lỗi ở đây nếu cần
     } finally {
       setIsProcessing(false)
     }
@@ -109,7 +122,7 @@ export default function Component() {
 
   const handleExample = () => {
     const exampleText =
-      "Nguyễn Văn A là sinh viên tại Đại học Bách Khoa Hà Nội, Việt Nam. Vào ngày 15/06/2023, anh ấy đã tốt nghiệp."
+      "Bệnh nhân Nguyễn Văn A, 45 tuổi, nam giới, có mã số BN12345, là giáo viên tại Trường Đại học Bách Khoa Hà Nội. Vào ngày 15/06/2023, anh ấy đến bệnh viện bằng xe máy với các triệu chứng sốt và ho."
     setInputText(exampleText)
     setHasResult(false)
     setEntities([])
