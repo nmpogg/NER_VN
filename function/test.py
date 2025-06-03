@@ -1,10 +1,12 @@
 import torch
+import torch.nn as nn
 from transformers import AutoTokenizer, AutoModel
 from pyvi import ViTokenizer
+from function.format import DateExtractor
 
 
 # Định nghĩa lớp mô hình NER (phải giống khi huấn luyện)
-class PhoBERTForNER(torch.nn.Module):
+class PhoBERTForNER(nn.Module):
     def __init__(self, num_labels):
         super(PhoBERTForNER, self).__init__()
         self.phobert = AutoModel.from_pretrained("vinai/phobert-base")
@@ -126,7 +128,8 @@ def main():
               'B-SYMPTOM_AND_DISEASE', 'I-SYMPTOM_AND_DISEASE',
               'B-TRANSPORTATION', 'I-TRANSPORTATION',
               'B-AGE', 'I-AGE',
-              'B-JOB', 'I-JOB'
+              'B-JOB', 'I-JOB',
+              'B-MISC', 'I-MISC'
               ]
 
     # Ánh xạ nhãn sang id và ngược lại
@@ -135,16 +138,23 @@ def main():
 
     # Tải mô hình
     model = PhoBERTForNER(num_labels=len(NER_LABELS))
-    model_path = "models/phobert_ner_model.pth"  # Đường dẫn tới file mô hình
+    model_path = "../models/phobert_ner_model.pth"  # Đường dẫn tới file mô hình
     model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
     model.to(device)
     model.eval()
 
     # Test với một câu
-    test_text = "Tôi yêu Vi ệt Nam."
+    test_text = "Thứ sáu tuần sau Apple tung ra sản phẩm mới"
     tagged_words = predict_ner(model, tokenizer, test_text, device, id2tag)
+    extractor = DateExtractor()
+    results, changes = extractor.process_ner_results(tagged_words)
+
     print("\nKết quả nhận diện thực thể:")
-    print("Tagged words:", tagged_words)
+    print("Tagged words:", results)
+
+    print("\nSau khi định dạng:")
+    print(changes)
+    
 
 if __name__ == "__main__":
     main()

@@ -109,64 +109,64 @@ class DateExtractor:
             return result_date.strftime("%d/%m/%Y")
 
         # Kiểm tra mẫu "ngày X tháng Y năm Z"
-        pattern1 = r"ngày\s+(\d+)\s+tháng\s+(\d+)(?:\s+năm\s+(\d+))?"
-        match = re.search(pattern1, date_text)
-        if match:
-            day, month, year = match.groups()
-            day = int(day)
-            month = int(month)
-            year = int(year) if year else today.year
-            # Xử lý năm 2 chữ số
-            if year < 100:
-                year += 2000
-            try:
-                return datetime(year, month, day).strftime("%d/%m/%Y")
-            except ValueError:
-                pass  # Ngày không hợp lệ
+        # pattern1 = r"ngày\s+(\d+)\s+tháng\s+(\d+)(?:\s+năm\s+(\d+))?"
+        # match = re.search(pattern1, date_text)
+        # if match:
+        #     day, month, year = match.groups()
+        #     day = int(day)
+        #     month = int(month)
+        #     year = int(year) if year else today.year
+        #     # Xử lý năm 2 chữ số
+        #     if year < 100:
+        #         year += 2000
+        #     try:
+        #         return datetime(year, month, day).strftime("%d/%m/%Y")
+        #     except ValueError:
+        #         pass  # Ngày không hợp lệ
 
-        # Kiểm tra mẫu "X/Y/Z"
-        pattern2 = r"(\d+)[/-](\d+)(?:[/-](\d+))?"
-        match = re.search(pattern2, date_text)
-        if match:
-            day, month, year = match.groups()
-            day = int(day)
-            month = int(month)
-            year = int(year) if year else today.year
-            if year < 100:
-                year += 2000
-            try:
-                return datetime(year, month, day).strftime("%d/%m/%Y")
-            except ValueError:
-                # Thử đảo ngược ngày và tháng nếu không hợp lệ
-                try:
-                    return datetime(year, day, month).strftime("%d/%m/%Y")
-                except ValueError:
-                    pass
+        # # Kiểm tra mẫu "X/Y/Z"
+        # pattern2 = r"(\d+)[/-](\d+)(?:[/-](\d+))?"
+        # match = re.search(pattern2, date_text)
+        # if match:
+        #     day, month, year = match.groups()
+        #     day = int(day)
+        #     month = int(month)
+        #     year = int(year) if year else today.year
+        #     if year < 100:
+        #         year += 2000
+        #     try:
+        #         return datetime(year, month, day).strftime("%d/%m/%Y")
+        #     except ValueError:
+        #         # Thử đảo ngược ngày và tháng nếu không hợp lệ
+        #         try:
+        #             return datetime(year, day, month).strftime("%d/%m/%Y")
+        #         except ValueError:
+        #             pass
 
-        # Kiểm tra tên tháng
-        for month_name, month_num in self.month_dict.items():
-            if month_name in date_text:
-                # Tìm ngày trong chuỗi
-                day_match = re.search(r"(\d+)\s*(?:" + month_name + ")", date_text)
-                if day_match:
-                    day = int(day_match.group(1))
-                else:
-                    # Nếu không tìm thấy ngày, giả định là ngày 1
-                    day = 1
+        # # Kiểm tra tên tháng
+        # for month_name, month_num in self.month_dict.items():
+        #     if month_name in date_text:
+        #         # Tìm ngày trong chuỗi
+        #         day_match = re.search(r"(\d+)\s*(?:" + month_name + ")", date_text)
+        #         if day_match:
+        #             day = int(day_match.group(1))
+        #         else:
+        #             # Nếu không tìm thấy ngày, giả định là ngày 1
+        #             day = 1
 
-                # Tìm năm trong chuỗi
-                year_match = re.search(r"năm\s+(\d+)", date_text)
-                if year_match:
-                    year = int(year_match.group(1))
-                    if year < 100:
-                        year += 2000
-                else:
-                    year = today.year
+        #         # Tìm năm trong chuỗi
+        #         year_match = re.search(r"năm\s+(\d+)", date_text)
+        #         if year_match:
+        #             year = int(year_match.group(1))
+        #             if year < 100:
+        #                 year += 2000
+        #         else:
+        #             year = today.year
 
-                try:
-                    return datetime(year, month_num, day).strftime("%d/%m/%Y")
-                except ValueError:
-                    pass
+        #         try:
+        #             return datetime(year, month_num, day).strftime("%d/%m/%Y")
+        #         except ValueError:
+        #             pass
 
         # Nếu không khớp với bất kỳ mẫu nào, trả về chuỗi gốc
         return date_text
@@ -176,12 +176,15 @@ class DateExtractor:
         Args:
             tagged_words: List of tuples containing (word, tag) pairs
         Returns:
-            List of tuples containing (word, tag) pairs with dates formatted
+            Tuple containing:
+            - Original tagged words list
+            - Dictionary containing original and formatted date entities
         """
         date_entities = []
         current_date = []
         current_indices = []
         current_tags = []
+        date_changes = {}  # Dictionary to store original and formatted dates
 
         # Extract date entities from tagged words
         for i, (word, tag) in enumerate(tagged_words):
@@ -208,26 +211,13 @@ class DateExtractor:
         if current_date:
             date_entities.append((' '.join(current_date), current_indices, current_tags))
 
-        # Create a copy of tagged words to modify
-        result_words = tagged_words.copy()
-
-        # Replace DATE entities with formatted dates
+        # Store date changes without modifying the original input
         for date_text, indices, tags in date_entities:
             formatted_date = self.convert_to_date_format(date_text)
+            date_changes[date_text] = formatted_date
 
-            # Debug
-            print(f"Date entity: '{date_text}' -> '{formatted_date}'")
-
-            # Replace first token with formatted date but keep original tag
-            if indices:
-                result_words[indices[0]] = (formatted_date, tags[0])
-
-                # Set remaining tokens to empty strings but keep original tags
-                for idx, tag in zip(indices[1:], tags[1:]):
-                    result_words[idx] = ('', tag)
-
-        # Filter out empty tokens and return the tagged words
-        return [(word, tag) for word, tag in result_words if word]
+        # Return original input and date changes dictionary
+        return tagged_words, date_changes
 
 
 # Ví dụ sử dụng
@@ -236,58 +226,66 @@ def example():
 
     # Ví dụ 1: "Hôm nay"
     text1 = [('Tôi', 'O'), ('có', 'O'), ('cuộc', 'O'), ('họp', 'O'), ('vào', 'O'), ('hôm', 'B-DATE'), ('nay', 'I-DATE')]
-    result1 = extractor.process_ner_results(text1)
+    result1, changes1 = extractor.process_ner_results(text1)
     print(f"Input: {text1}")
     print(f"Output: {result1}")
+    print(f"Date Changes: {changes1}")
     print()
 
     # Ví dụ 2: "Hôm qua"
     text2 = [('Hôm', 'B-DATE'), ('qua', 'I-DATE'), ('tôi', 'O'), ('đã', 'O'), ('đi', 'O'), ('học', 'O')]
-    result2 = extractor.process_ner_results(text2)
+    result2, changes2 = extractor.process_ner_results(text2)
     print(f"Input: {text2}")
     print(f"Output: {result2}")
+    print(f"Date Changes: {changes2}")
     print()
 
     # Ví dụ 3: "10 năm trước"
     text3 = [('Tôi', 'O'), ('đã', 'O'), ('tốt', 'O'), ('nghiệp', 'O'), ('đại', 'O'), ('học', 'O'), ('10', 'B-DATE'), ('năm', 'I-DATE'), ('trước', 'I-DATE')]
-    result3 = extractor.process_ner_results(text3)
+    result3, changes3 = extractor.process_ner_results(text3)
     print(f"Input: {text3}")
     print(f"Output: {result3}")
+    print(f"Date Changes: {changes3}")
     print()
 
     # Ví dụ 4: "2 ngày trước"
     text4 = [('2', 'B-DATE'), ('ngày', 'I-DATE'), ('trước', 'I-DATE'), ('tôi', 'O'), ('đã', 'O'), ('đặt', 'O'), ('vé', 'O'), ('máy', 'O'), ('bay', 'O')]
-    result4 = extractor.process_ner_results(text4)
+    result4, changes4 = extractor.process_ner_results(text4)
     print(f"Input: {text4}")
     print(f"Output: {result4}")
+    print(f"Date Changes: {changes4}")
     print()
 
     # Ví dụ 5: "năm trước"
     text5 = [('Thứ', 'B-DATE'), ('bảy', 'I-DATE'), ('tuần', 'I-DATE'), ('trước', 'I-DATE'), ('tôi', 'O'), ('đã', 'O'), ('đi', 'O'), ('du', 'O'), ('lịch', 'O'), ('châu', 'O'), ('Âu', 'O')]
-    result5 = extractor.process_ner_results(text5)
+    result5, changes5 = extractor.process_ner_results(text5)
     print(f"Input: {text5}")
     print(f"Output: {result5}")
+    print(f"Date Changes: {changes5}")
     print()
 
     # Ví dụ 6: "năm sau"
     text6 = [('Tôi', 'O'), ('sẽ', 'O'), ('tốt', 'O'), ('nghiệp', 'O'), ('vào', 'O'), ('năm', 'B-DATE'), ('sau', 'I-DATE')]
-    result6 = extractor.process_ner_results(text6)
+    result6, changes6 = extractor.process_ner_results(text6)
     print(f"Input: {text6}")
     print(f"Output: {result6}")
+    print(f"Date Changes: {changes6}")
     print()
 
     # Ví dụ 7: "thế kỉ trước"
     text7 = [('Tòa', 'O'), ('nhà', 'O'), ('này', 'O'), ('được', 'O'), ('xây', 'O'), ('dựng', 'O'), ('từ', 'O'), ('thế', 'B-DATE'), ('kỉ', 'I-DATE'), ('trước', 'I-DATE')]
-    result7 = extractor.process_ner_results(text7)
+    result7, changes7 = extractor.process_ner_results(text7)
     print(f"Input: {text7}")
     print(f"Output: {result7}")
+    print(f"Date Changes: {changes7}")
     print()
 
     # Ví dụ 8: "thế kỉ sau"
     text8 = [('Công', 'O'), ('nghệ', 'O'), ('này', 'O'), ('sẽ', 'O'), ('thay', 'O'), ('đổi', 'O'), ('thế', 'O'), ('giới', 'O'), ('vào', 'O'), ('thế', 'B-DATE'), ('kỉ', 'I-DATE'), ('sau', 'I-DATE')]
-    result8 = extractor.process_ner_results(text8)
+    result8, changes8 = extractor.process_ner_results(text8)
     print(f"Input: {text8}")
     print(f"Output: {result8}")
+    print(f"Date Changes: {changes8}")
     print()
 
 

@@ -3,9 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import torch
 from transformers import AutoTokenizer
-from test import PhoBERTForNER, predict_ner
-
-import format
+from function.test import PhoBERTForNER, predict_ner
+from function.format import DateExtractor
 
 app = FastAPI()
 
@@ -39,6 +38,7 @@ NER_LABELS = ['O',
               'B-TRANSPORTATION', 'I-TRANSPORTATION',
               'B-AGE', 'I-AGE',
               'B-JOB', 'I-JOB',
+              'B-MISC', 'I-MISC'
               ]
 
 # Ánh xạ nhãn
@@ -57,8 +57,8 @@ async def process_text(request: TextRequest):
     try:
         # Dự đoán NER
         tagged_words = predict_ner(model, tokenizer, request.text, device, id2tag)
-        extractor = format.DateExtractor()
-        tagged_words_after_format = extractor.process_ner_results(tagged_words)
+        extractor = DateExtractor()
+        tagged_words_after_format, date_changes = extractor.process_ner_results(tagged_words)
         
         # Chuyển đổi kết quả sang định dạng phù hợp với giao diện
         entities = []
@@ -85,7 +85,11 @@ async def process_text(request: TextRequest):
         if current_entity:
             entities.append(current_entity)
             
-        return {"entities": entities}
+        return {
+            "entities": entities,
+            "date_changes": date_changes,
+            "text": request.text
+        }
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

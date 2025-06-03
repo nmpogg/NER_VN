@@ -14,6 +14,12 @@ interface Entity {
   end: number
 }
 
+interface ApiResponse {
+  entities: Entity[]
+  date_changes: { [key: string]: string }
+  text: string
+}
+
 const entityColors = {
   NAME: "bg-blue-100 text-blue-800 border-blue-200",
   LOCATION: "bg-green-100 text-green-800 border-green-200",
@@ -21,11 +27,10 @@ const entityColors = {
   DATE: "bg-amber-100 text-amber-800 border-amber-200",
   PATIENT_ID: "bg-red-100 text-red-800 border-red-200",
   GENDER: "bg-pink-100 text-pink-800 border-pink-200",
-  OCCUPATION: "bg-indigo-100 text-indigo-800 border-indigo-200",
+  JOB: "bg-indigo-100 text-indigo-800 border-indigo-200",
   SYMPTOM_AND_DISEASE: "bg-orange-100 text-orange-800 border-orange-200",
   TRANSPORTATION: "bg-teal-100 text-teal-800 border-teal-200",
-  AGE: "bg-cyan-100 text-cyan-800 border-cyan-200",
-  JOB: "bg-yellow-100 text-yellow-800 border-yellow-200"
+  AGE: "bg-cyan-100 text-cyan-800 border-cyan-200"
 }
 
 const entityLabels = {
@@ -35,16 +40,16 @@ const entityLabels = {
   DATE: "Ngày tháng",
   PATIENT_ID: "Mã bệnh nhân",
   GENDER: "Giới tính",
-  OCCUPATION: "Nghề nghiệp",
+  JOB: "Nghề nghiệp",
   SYMPTOM_AND_DISEASE: "Triệu chứng & Bệnh",
   TRANSPORTATION: "Phương tiện",
-  AGE: "Tuổi",
-  JOB: "Công việc"
+  AGE: "Tuổi"
 }
 
 export default function Component() {
   const [inputText, setInputText] = useState("")
   const [entities, setEntities] = useState<Entity[]>([])
+  const [dateChanges, setDateChanges] = useState<{ [key: string]: string }>({})
   const [isProcessing, setIsProcessing] = useState(false)
   const [hasResult, setHasResult] = useState(false)
 
@@ -54,6 +59,7 @@ export default function Component() {
     setIsProcessing(true)
     setHasResult(false)
     setEntities([])
+    setDateChanges({})
 
     try {
       const response = await fetch("http://localhost:8000/api/ner", {
@@ -68,8 +74,9 @@ export default function Component() {
         throw new Error("Failed to process text")
       }
 
-      const data = await response.json()
+      const data: ApiResponse = await response.json()
       setEntities(data.entities)
+      setDateChanges(data.date_changes)
       setHasResult(true)
     } catch (error) {
       console.error("Error processing text:", error)
@@ -98,13 +105,20 @@ export default function Component() {
           elements.push(<span key={`text-${index}`}>{inputText.slice(lastIndex, entityStart)}</span>)
         }
 
-        // Add highlighted entity
+        // Add highlighted entity with formatted date if available
+        const formattedDate = entity.label === 'DATE' ? dateChanges[entity.text] : null
         elements.push(
           <span
             key={`entity-${index}`}
             className={`px-1 py-0.5 rounded text-sm font-medium ${entityColors[entity.label as keyof typeof entityColors]}`}
+            title={formattedDate ? `Định dạng: ${formattedDate}` : undefined}
           >
             {inputText.slice(entityStart, entityStart + entity.text.length)}
+            {formattedDate && (
+              <span className="ml-1 text-xs opacity-75">
+                ({formattedDate})
+              </span>
+            )}
           </span>,
         )
 
@@ -126,6 +140,7 @@ export default function Component() {
     setInputText(exampleText)
     setHasResult(false)
     setEntities([])
+    setDateChanges({})
   }
 
   return (
@@ -226,7 +241,14 @@ export default function Component() {
                   <div className="grid gap-2">
                     {entities.map((entity, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-white border rounded-lg">
-                        <span className="font-medium">{entity.text}</span>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{entity.text}</span>
+                          {entity.label === 'DATE' && dateChanges[entity.text] && (
+                            <span className="text-sm text-gray-500">
+                              Định dạng: {dateChanges[entity.text]}
+                            </span>
+                          )}
+                        </div>
                         <Badge variant="outline" className={entityColors[entity.label as keyof typeof entityColors]}>
                           {entityLabels[entity.label as keyof typeof entityLabels]}
                         </Badge>

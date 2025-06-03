@@ -42,7 +42,8 @@ NER_LABELS = ['O',
               'B-SYMPTOM_AND_DISEASE', 'I-SYMPTOM_AND_DISEASE',
               'B-TRANSPORTATION', 'I-TRANSPORTATION',
               'B-AGE', 'I-AGE',
-              'B-JOB', 'I-JOB'
+              'B-JOB', 'I-JOB',
+              'B-MISC', 'I-MISC'
               ]
 
 # Ánh xạ nhãn sang id và ngược lại
@@ -452,13 +453,13 @@ def main():
     tagged_words = predict_ner(model, tokenizer, test_text, device)
 
     extractor = format.DateExtractor()
-    tagged_words_after_format = extractor.process_ner_results(tagged_words)
+    results, changes = extractor.process_ner_results(tagged_words)
 
     print("\nKết quả nhận diện thực thể:")
-    print("Tagged words:", tagged_words)
+    print("Tagged words:", results)
 
-    print("\nKết quả nhận diện thực thể sau khi định dạng:")
-    print("Tagged words after format:", tagged_words_after_format)
+    print("\nSau khi định dạng:")
+    print(changes)
 
 if __name__ == "__main__":
     main() 
