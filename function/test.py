@@ -2,7 +2,9 @@ import torch
 import torch.nn as nn
 from transformers import AutoTokenizer, AutoModel
 from pyvi import ViTokenizer
-from function.format import DateExtractor
+import re
+from .format import DateExtractor
+
 
 
 # Định nghĩa lớp mô hình NER (phải giống khi huấn luyện)
@@ -36,14 +38,32 @@ class PhoBERTForNER(nn.Module):
         return {"loss": loss, "logits": logits} if loss is not None else {"logits": logits}
 
 
+def tokenize_vi_full(text):
+    # Bước 1: Tách từ bằng pyvi
+    tokenized = ViTokenizer.tokenize(text)
+    
+    # Bước 2: Bỏ dấu _ và tách từng từ
+    words = []
+    for word in tokenized.split():
+        if "_" in word:
+            words.extend(word.split("_"))
+        else:
+            words.append(word)
+    
+    # Bước 3: Tách dấu câu thành token riêng
+    tokens = []
+    for word in words:
+        # Tách các dấu câu ra khỏi từ (giữ lại dấu câu)
+        tokens.extend(re.findall(r"\w+|[^\w\s]", word, re.UNICODE))
+    
+    return tokens
 
 # Hàm dự đoán NER (hỗ trợ chuỗi đơn hoặc danh sách câu)
 def predict_ner(model, tokenizer, sentence, device, id2tag, max_len=128):
     model.eval()
 
     # Tách từ sử dụng pyvi
-    words = sentence.split()
-    # words = ViTokenizer.tokenize(sentence).split()  # Tách từ và chuyển thành list
+    words = tokenize_vi_full(sentence)
 
     # Tạo đặc trưng
     features = [tokenizer.cls_token_id]
@@ -144,7 +164,7 @@ def main():
     model.eval()
 
     # Test với một câu
-    test_text = "Thứ sáu tuần sau Apple tung ra sản phẩm mới"
+    test_text = "Thứ sáu tuần sau Apple tung ra sản phẩm mới."
     tagged_words = predict_ner(model, tokenizer, test_text, device, id2tag)
     extractor = DateExtractor()
     results, changes = extractor.process_ner_results(tagged_words)

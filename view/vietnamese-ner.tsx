@@ -30,7 +30,8 @@ const entityColors = {
   JOB: "bg-indigo-100 text-indigo-800 border-indigo-200",
   SYMPTOM_AND_DISEASE: "bg-orange-100 text-orange-800 border-orange-200",
   TRANSPORTATION: "bg-teal-100 text-teal-800 border-teal-200",
-  AGE: "bg-cyan-100 text-cyan-800 border-cyan-200"
+  AGE: "bg-cyan-100 text-cyan-800 border-cyan-200",
+  MISC: "bg-gray-100 text-cyan-800 border-cyan-200"
 }
 
 const entityLabels = {
@@ -43,7 +44,8 @@ const entityLabels = {
   JOB: "Nghề nghiệp",
   SYMPTOM_AND_DISEASE: "Triệu chứng & Bệnh",
   TRANSPORTATION: "Phương tiện",
-  AGE: "Tuổi"
+  AGE: "Tuổi",
+  MISC: "Phức tạp"
 }
 
 export default function Component() {

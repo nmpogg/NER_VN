@@ -12,13 +12,11 @@ from seqeval.metrics import classification_report
 import os
 #import json
 from tqdm import tqdm
-import nltk
-#from nltk.tokenize import word_tokenize
-
+from pyvi import ViTokenizer
 import function.format as format
 
-# Download NLTK data
-nltk.download('punkt')
+import re
+
 
 # Cố định seed cho các thư viện
 seed = 42
@@ -298,12 +296,30 @@ def evaluate_model(model, dataloader, device):
 
     return results
 
-def predict_ner(model, tokenizer, sentence, device, max_len=128):
+def tokenize_vi_full(text):
+    # Bước 1: Tách từ bằng pyvi
+    tokenized = ViTokenizer.tokenize(text)
+    
+    # Bước 2: Bỏ dấu _ và tách từng từ
+    words = []
+    for word in tokenized.split():
+        if "_" in word:
+            words.extend(word.split("_"))
+        else:
+            words.append(word)
+    
+    # Bước 3: Tách dấu câu thành token riêng
+    tokens = []
+    for word in words:
+        # Tách các dấu câu ra khỏi từ (giữ lại dấu câu)
+        tokens.extend(re.findall(r"\w+|[^\w\s]", word, re.UNICODE))
+    
+    return tokens
+
+def predict_ner(model, tokenizer, sentence, device, max_len=1024):
     model.eval()
 
-    # Sử dụng NLTK để tách từ
-    words = sentence.split()
-    # words = word_tokenize(sentence)
+    words = tokenize_vi_full(sentence)
 
     features = [tokenizer.cls_token_id]
     word_ids = [None]
